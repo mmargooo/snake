@@ -149,8 +149,7 @@ bool keys[] = {false, false, false, false};
 bool keyPressed = false;
 
 // timing
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
+float timeInt = 0.25f;
 
 float angle = 0.0f;
 
@@ -197,19 +196,19 @@ int main()
 	{
 		glfwPollEvents();
 
-		float currentFrame = glfwGetTime();
-		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
-
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// time callculations
+		float currentFrame = glfwGetTime();
+		float ratio = currentFrame / timeInt;
 
 		float x = sin(angle) * 7.0f;
 		float z = cos(angle) * 7.0f;
 		angle += 0.002;
 
 		glm::vec3 lightPos(x, 5.0f, z);
-		glm::vec3 cameraPos(0.0f, 20.0f, 10.0f);
+		glm::vec3 cameraPos(0.0f, 15.0f, 15.0f);
 
 		shader->use();
 		
@@ -223,12 +222,13 @@ int main()
 		shader->setUnifVec3("pointLight.diffuse", glm::vec3(0.75f, 0.75f, 0.75f));
 		shader->setUnifVec3("pointLight.specular", glm::vec3(0.25f, 0.25f, 0.25f));
 
-		shader->setUnifVec3("spotLight.position", snake.getHead() + glm::vec3(0.0f, 10.0f, 0.0f));
+		glm::vec3 headAdjustment = (snake.getPrevElem(snake.getHeadId()) - snake.getHead()) * (1.0f - ratio);
+		shader->setUnifVec3("spotLight.position", snake.getHead() + headAdjustment + glm::vec3(0.0f, 10.0f, 0.0f));
 		shader->setUnifVec3("spotLight.direction", -glm::vec3(0.0f, 10.0f, 0.0f));
 		shader->setUnifVec3("spotLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
 		shader->setUnifVec3("spotLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
 		shader->setUnifVec3("spotLight.specular", glm::vec3(0.3f, 0.3f, 0.3f));
-		glUniform1f(shader->getUniformLocation("spotLight.cutOff"), glm::cos(glm::radians(12.5f)));
+		glUniform1f(shader->getUniformLocation("spotLight.cutOff"), glm::cos(glm::radians(1.0f)));
 		glUniform1f(shader->getUniformLocation("spotLight.outerCutOff"), glm::cos(glm::radians(15.0f)));
 
 		glUniform1i(shader->getUniformLocation("textureMap"), 0);
@@ -241,7 +241,7 @@ int main()
 		shader->setUnifMat4("V", V);
 		shader->setUnifMat4("M", M);
 		
-		if (glfwGetTime() > 0.25f) {
+		if (glfwGetTime() > timeInt) {
 			snake.changeDirection(keys);
 			snake.checkCollision(&food);
 			snake.move();
@@ -269,8 +269,11 @@ int main()
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tex_snake);
 		glBindVertexArray(vao);
+
 		for (int i = 0; i < snake.elem.size(); i++) {
-			M = glm::translate(glm::mat4(1.0f), snake.elem[i]);
+			glm::vec3 adjustment = (snake.getPrevElem(i) - snake.getElem(i)) * (1.0f - ratio);
+			M = glm::translate(glm::mat4(1.0f), snake.getElem(i));
+			M = glm::translate(M, adjustment);
 			shader->setUnifMat4("M", M);
 			glDrawArrays(GL_TRIANGLES, 0, numOfTriangles);
 		}
