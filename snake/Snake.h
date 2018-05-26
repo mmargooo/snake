@@ -82,6 +82,11 @@ public:
 		else if (direction == 'd') nextHead = glm::vec3(0.0f, 0.0f, 1.0f);
 
 		glm::vec3 headPos = elem[head] + nextHead;
+		// check outside of the map
+		if (headPos.x > 7.0f || headPos.x < -7.0f || headPos.z > 7.0f || headPos.z < -7.0f)
+			died = true;
+
+		// check collision with food
 		for (int i = 0; i < (*food).size(); i++) {
 			glm::vec3 pos = (*food)[i].position;
 			if (headPos.x == pos.x && headPos.z == pos.z) {

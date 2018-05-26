@@ -169,59 +169,6 @@ void windowResize(GLFWwindow* window, int width, int height);
 void generateFood(int numOfFood, Snake snake);
 void generateObstacles(int numOfObstacles, Snake snake);
 
-void generateFood(int numOfFood, Snake snake) {
-	for (int i = 0; i < numOfFood; i++) {
-		bool checkOthers = false;
-
-		int x, z;
-		do {
-			x = (rand() % boardWidth) - boardWidth / 2;
-			z = (rand() % boardHeight) - boardHeight / 2;
-			glm::vec3 pos = glm::vec3((float)x, 1.0f, (float)z);
-			for (int j = 0; j < snake.elem.size(); j++) {
-				if (snake.elem[j] == pos)
-					checkOthers = true;
-			}
-			for (int j = 0; j < obstacle.size(); j++) {
-				if (obstacle[j].position == pos)
-					checkOthers = true;
-			}
-			for (int j = 0; j < food.size(); j++) {
-				glm::vec3 foodPos = food[j].position;
-				foodPos.y = 1.0f;
-				if (foodPos == pos)
-					checkOthers = true;
-			}
-		} while (checkOthers);
-
-		food.push_back(Food(glm::vec3((float)x, 1.0f, (float)z)));
-	}
-}
-
-void generateObstacles(int numOfObstacles, Snake snake) {
-	for (int i = 0; i < numOfObstacles; i++) {
-		bool checkOthers = false;
-
-		int x, z;
-		do {
-			x = (rand() % boardWidth) - boardWidth/2;
-			z = (rand() % boardHeight-1) - boardHeight/2;
-			glm::vec3 pos = glm::vec3((float)x, 1.0f, (float)z);
-			for (int j = 0; j < snake.elem.size(); j++) {
-				if (snake.elem[j] == pos)
-					checkOthers = true;
-			}
-			for (int j = 0; j < obstacle.size(); j++) {
-				if (obstacle[j].position == pos)
-					checkOthers = true;
-			}
-		} while (checkOthers);
-
-		obstacle.push_back(Obstacle(glm::vec3((float)x,1.0f,(float)z)));
-	}
-}
-
-
 int main()
 {
 	srand(time(NULL));
@@ -244,15 +191,7 @@ int main()
 	
 	Snake snake;
 
-	/*food.push_back(Food(glm::vec3(4.0f, 1.35f, 0.0f)));
-	food.push_back(Food(glm::vec3(2.0f, 1.35f, 4.0f)));
-	food.push_back(Food(glm::vec3(-2.0f, 1.35f, 4.0f)));*/
-
-	/*obstacle.push_back(Obstacle(glm::vec3(6.0f, 1.0f, 6.0f)));
-	obstacle.push_back(Obstacle(glm::vec3(6.0f, 1.0f, -6.0f)));
-	obstacle.push_back(Obstacle(glm::vec3(-6.0f, 1.0f, -6.0f)));*/
-
-	generateObstacles(6, snake);
+	generateObstacles(10, snake);
 	generateFood(3, snake);
 
 	initOpenGL(window);
@@ -287,13 +226,15 @@ int main()
 		shader->setUnifVec3("pointLight.position", lightPos);
 		shader->setUnifVec3("pointLight.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
 		shader->setUnifVec3("pointLight.diffuse", glm::vec3(0.75f, 0.75f, 0.75f));
-		shader->setUnifVec3("pointLight.specular", glm::vec3(0.25f, 0.25f, 0.25f));
+		shader->setUnifVec3("pointLight.specular", glm::vec3(0.55f, 0.55f, 0.55f));
 
 		shader->setUnifVec3("spotLight.position", snake.getHead() + glm::vec3(0.0f, 10.0f, 0.0f));
 		shader->setUnifVec3("spotLight.direction", -glm::vec3(0.0f, 10.0f, 0.0f));
 		shader->setUnifVec3("spotLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
-		shader->setUnifVec3("spotLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
-		shader->setUnifVec3("spotLight.specular", glm::vec3(0.3f, 0.3f, 0.3f));
+		/*shader->setUnifVec3("spotLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
+		shader->setUnifVec3("spotLight.specular", glm::vec3(0.3f, 0.3f, 0.3f));*/
+		shader->setUnifVec3("spotLight.diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
+		shader->setUnifVec3("spotLight.specular", glm::vec3(0.0f, 0.0f, 0.0f));
 		glUniform1f(shader->getUniformLocation("spotLight.cutOff"), glm::cos(glm::radians(1.0f)));
 		glUniform1f(shader->getUniformLocation("spotLight.outerCutOff"), glm::cos(glm::radians(15.0f)));
 
@@ -395,6 +336,62 @@ int main()
 	glfwTerminate();
 
 	return EXIT_SUCCESS;
+}
+
+void generateFood(int numOfFood, Snake snake) {
+	for (int i = 0; i < numOfFood; i++) {
+		bool checkOthers;
+
+		int x, z;
+		do {
+			checkOthers = false;
+
+			x = -7 + (rand() % static_cast<int>(7 - (-7) + 1));
+			z = -7 + (rand() % static_cast<int>(7 - (-7) + 1));
+			glm::vec3 pos = glm::vec3((float)x, 1.0f, (float)z);
+			for (int j = 0; j < snake.elem.size(); j++) {
+				if (snake.elem[j] == pos)
+					checkOthers = true;
+			}
+			for (int j = 0; j < obstacle.size(); j++) {
+				if (obstacle[j].position == pos)
+					checkOthers = true;
+			}
+			for (int j = 0; j < food.size(); j++) {
+				glm::vec3 foodPos = food[j].position;
+				foodPos.y = 1.0f;
+				if (foodPos == pos)
+					checkOthers = true;
+			}
+		} while (checkOthers);
+
+		food.push_back(Food(glm::vec3((float)x, 1.0f, (float)z)));
+	}
+}
+
+void generateObstacles(int numOfObstacles, Snake snake) {
+	for (int i = 0; i < numOfObstacles; i++) {
+		bool checkOthers = false;
+
+		int x, z;
+		do {
+			checkOthers = false;
+
+			x = -7 + (rand() % static_cast<int>(7 - (-7) + 1));
+			z = -7 + (rand() % static_cast<int>(7 - (-7) + 1));
+			glm::vec3 pos = glm::vec3((float)x, 1.0f, (float)z);
+			for (int j = 0; j < snake.elem.size(); j++) {
+				if (snake.elem[j] == pos)
+					checkOthers = true;
+			}
+			for (int j = 0; j < obstacle.size(); j++) {
+				if (obstacle[j].position == pos)
+					checkOthers = true;
+			}
+		} while (checkOthers);
+
+		obstacle.push_back(Obstacle(glm::vec3((float)x, 1.0f, (float)z)));
+	}
 }
 
 void windowResize(GLFWwindow* window, int width, int height) {
