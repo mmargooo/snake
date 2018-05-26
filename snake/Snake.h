@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 
 #include "Food.h"
+#include "Obstacle.h"
 
 class Snake {
 private:
@@ -73,7 +74,7 @@ public:
 			if (direction == 'l' || direction == 'r') direction = 'd';
 		}
 	}
-	void checkCollision(std::vector<Food> * food) {
+	void checkCollision(std::vector<Food> * food, std::vector<Obstacle> * obstacle) {
 		glm::vec3 nextHead;
 		if (direction == 'r') nextHead = glm::vec3(1.0f, 0.0f, 0.0f);
 		else if (direction == 'l') nextHead = glm::vec3(-1.0f, 0.0f, 0.0f);
@@ -92,6 +93,13 @@ public:
 		}
 
 		// check collision with obstacles
+		for (int i = 0; i < (*obstacle).size(); i++) {
+			glm::vec3 pos = (*obstacle)[i].position;
+			if (headPos.x == pos.x && headPos.z == pos.z) {
+				died = true;
+			}
+		}
+
 	}
 	char getDirection() {
 		return direction;

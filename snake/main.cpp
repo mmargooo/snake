@@ -142,7 +142,7 @@ float aspect = 800.0/600.0;
 
 GLuint vbo_vertices, vbo_texture, vbo_normals;
 GLuint vao, lightVAO;
-GLuint tex_snake, tex_grass, tex_food;
+GLuint tex_snake, tex_grass, tex_food, tex_stone;
 Shader * shader, * lampShader;
 
 // left, up, right, down, escape
@@ -154,7 +154,11 @@ float timeInt = 0.25f;
 
 float angle = 0.0f;
 
+int boardWidth = 15;
+int boardHeight = 15;
+
 std::vector<Food> food;
+std::vector<Obstacle> obstacle;
 
 void initOpenGL(GLFWwindow* window);
 void prepareObjects();
@@ -162,6 +166,61 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void clearKeys();
 GLuint readTexture(char* filename);
 void windowResize(GLFWwindow* window, int width, int height);
+void generateFood(int numOfFood, Snake snake);
+void generateObstacles(int numOfObstacles, Snake snake);
+
+void generateFood(int numOfFood, Snake snake) {
+	for (int i = 0; i < numOfFood; i++) {
+		bool checkOthers = false;
+
+		int x, z;
+		do {
+			x = (rand() % boardWidth) - boardWidth / 2;
+			z = (rand() % boardHeight) - boardHeight / 2;
+			glm::vec3 pos = glm::vec3((float)x, 1.0f, (float)z);
+			for (int j = 0; j < snake.elem.size(); j++) {
+				if (snake.elem[j] == pos)
+					checkOthers = true;
+			}
+			for (int j = 0; j < obstacle.size(); j++) {
+				if (obstacle[j].position == pos)
+					checkOthers = true;
+			}
+			for (int j = 0; j < food.size(); j++) {
+				glm::vec3 foodPos = food[j].position;
+				foodPos.y = 1.0f;
+				if (foodPos == pos)
+					checkOthers = true;
+			}
+		} while (checkOthers);
+
+		food.push_back(Food(glm::vec3((float)x, 1.0f, (float)z)));
+	}
+}
+
+void generateObstacles(int numOfObstacles, Snake snake) {
+	for (int i = 0; i < numOfObstacles; i++) {
+		bool checkOthers = false;
+
+		int x, z;
+		do {
+			x = (rand() % boardWidth) - boardWidth/2;
+			z = (rand() % boardHeight-1) - boardHeight/2;
+			glm::vec3 pos = glm::vec3((float)x, 1.0f, (float)z);
+			for (int j = 0; j < snake.elem.size(); j++) {
+				if (snake.elem[j] == pos)
+					checkOthers = true;
+			}
+			for (int j = 0; j < obstacle.size(); j++) {
+				if (obstacle[j].position == pos)
+					checkOthers = true;
+			}
+		} while (checkOthers);
+
+		obstacle.push_back(Obstacle(glm::vec3((float)x,1.0f,(float)z)));
+	}
+}
+
 
 int main()
 {
@@ -185,9 +244,16 @@ int main()
 	
 	Snake snake;
 
-	food.push_back(Food(glm::vec3(4.0f, 1.35f, 0.0f)));
+	/*food.push_back(Food(glm::vec3(4.0f, 1.35f, 0.0f)));
 	food.push_back(Food(glm::vec3(2.0f, 1.35f, 4.0f)));
-	food.push_back(Food(glm::vec3(-2.0f, 1.35f, 4.0f)));
+	food.push_back(Food(glm::vec3(-2.0f, 1.35f, 4.0f)));*/
+
+	/*obstacle.push_back(Obstacle(glm::vec3(6.0f, 1.0f, 6.0f)));
+	obstacle.push_back(Obstacle(glm::vec3(6.0f, 1.0f, -6.0f)));
+	obstacle.push_back(Obstacle(glm::vec3(-6.0f, 1.0f, -6.0f)));*/
+
+	generateObstacles(6, snake);
+	generateFood(3, snake);
 
 	initOpenGL(window);
 	glfwSetTime(0);
@@ -200,7 +266,7 @@ int main()
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// time callculations
+		// time calculation
 		float currentFrame = glfwGetTime();
 		float ratio = currentFrame / timeInt;
 
@@ -209,7 +275,7 @@ int main()
 		angle += 0.002;
 
 		glm::vec3 lightPos(x, 5.0f, z);
-		glm::vec3 cameraPos(0.0f, 10.0f, 15.0f);
+		glm::vec3 cameraPos(0.0f, 15.0f, 15.0f);
 
 		shader->use();
 		
@@ -243,14 +309,11 @@ int main()
 		
 		if (glfwGetTime() > timeInt) {
 			snake.changeDirection(keys);
-			snake.checkCollision(&food);
+			snake.checkCollision(&food, &obstacle);
 			snake.move();
 			clearKeys();
 			glfwSetTime(0);
 		}
-
-		int boardWidth = 15;
-		int boardHeight = 15;
 		
 		// draw background
 		glActiveTexture(GL_TEXTURE0);
@@ -294,6 +357,17 @@ int main()
 			M = glm::scale(M, glm::vec3(0.65f, 0.65f, 0.65f));
 			M = glm::rotate(M, food[i].angle, glm::vec3(0.0f, 1.0f, 0.0f));
 			M = glm::translate(M, glm::vec3(0.0f, (sin(food[i].angle) - 0.5f)*0.25f, 0.0f));
+			shader->setUnifMat4("M", M);
+			glDrawArrays(GL_TRIANGLES, 0, numOfTriangles);
+		}
+		glBindVertexArray(0);
+
+		// draw obstacles
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, tex_stone);
+		glBindVertexArray(vao);
+		for (int i = 0; i < obstacle.size(); i++) {
+			M = glm::translate(glm::mat4(1.0f), obstacle[i].position);
 			shader->setUnifMat4("M", M);
 			glDrawArrays(GL_TRIANGLES, 0, numOfTriangles);
 		}
@@ -350,6 +424,7 @@ void initOpenGL(GLFWwindow* window) {
 	tex_snake = readTexture("./resources/textures/metal.png");
 	tex_grass = readTexture("./resources/textures/grass.png");
 	tex_food = readTexture("./resources/textures/texture.png");
+	tex_stone = readTexture("./resources/textures/stone.png");
 }
 
 GLuint makeBuffer(void *data, int vertexCount, int vertexSize) {
