@@ -125,6 +125,7 @@
   <ItemGroup>
     <ClInclude Include="Food.h" />
     <ClInclude Include="lodepng.h" />
+    <ClInclude Include="Obstacle.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Snake.h" />
   </ItemGroup>

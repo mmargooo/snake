@@ -11,6 +11,7 @@
 #include "Shader.h"
 #include "Snake.h"
 #include "Food.h"
+#include "Obstacle.h"
 #include "lodepng.h"
 
 GLfloat cube[] =
@@ -184,9 +185,9 @@ int main()
 	
 	Snake snake;
 
-	food.push_back(Food(glm::vec3(4.0f, 1.0f, 0.0f)));
-	food.push_back(Food(glm::vec3(2.0f, 1.0f, 4.0f)));
-	food.push_back(Food(glm::vec3(-2.0f, 1.0f, 4.0f)));
+	food.push_back(Food(glm::vec3(4.0f, 1.35f, 0.0f)));
+	food.push_back(Food(glm::vec3(2.0f, 1.35f, 4.0f)));
+	food.push_back(Food(glm::vec3(-2.0f, 1.35f, 4.0f)));
 
 	initOpenGL(window);
 	glfwSetTime(0);
@@ -208,7 +209,7 @@ int main()
 		angle += 0.002;
 
 		glm::vec3 lightPos(x, 5.0f, z);
-		glm::vec3 cameraPos(0.0f, 15.0f, 15.0f);
+		glm::vec3 cameraPos(0.0f, 10.0f, 15.0f);
 
 		shader->use();
 		
@@ -222,8 +223,7 @@ int main()
 		shader->setUnifVec3("pointLight.diffuse", glm::vec3(0.75f, 0.75f, 0.75f));
 		shader->setUnifVec3("pointLight.specular", glm::vec3(0.25f, 0.25f, 0.25f));
 
-		glm::vec3 headAdjustment = (snake.getPrevElem(snake.getHeadId()) - snake.getHead()) * (1.0f - ratio);
-		shader->setUnifVec3("spotLight.position", snake.getHead() + headAdjustment + glm::vec3(0.0f, 10.0f, 0.0f));
+		shader->setUnifVec3("spotLight.position", snake.getHead() + glm::vec3(0.0f, 10.0f, 0.0f));
 		shader->setUnifVec3("spotLight.direction", -glm::vec3(0.0f, 10.0f, 0.0f));
 		shader->setUnifVec3("spotLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
 		shader->setUnifVec3("spotLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
@@ -271,11 +271,16 @@ int main()
 		glBindVertexArray(vao);
 
 		for (int i = 0; i < snake.elem.size(); i++) {
-			glm::vec3 adjustment = (snake.getPrevElem(i) - snake.getElem(i)) * (1.0f - ratio);
+			//glm::vec3 adj = (snake.getPrevElem(i) - snake.getElem(i)) * (1-ratio);
 			M = glm::translate(glm::mat4(1.0f), snake.getElem(i));
-			M = glm::translate(M, adjustment);
+			//M = glm::translate(M, adj);
 			shader->setUnifMat4("M", M);
 			glDrawArrays(GL_TRIANGLES, 0, numOfTriangles);
+
+			/*M = glm::translate(glm::mat4(1.0f), snake.getPrevElem(i));
+			M = glm::translate(M, glm::vec3(0.0f, 1.0f, 0.0f));
+			shader->setUnifMat4("M", M);
+			glDrawArrays(GL_TRIANGLES, 0, numOfTriangles);*/
 		}
 		glBindVertexArray(0);
 
@@ -284,7 +289,11 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, tex_food);
 		glBindVertexArray(vao);
 		for (int i = 0; i < food.size(); i++) {
+			food[i].angle += 0.005;
 			M = glm::translate(glm::mat4(1.0f), food[i].position);
+			M = glm::scale(M, glm::vec3(0.65f, 0.65f, 0.65f));
+			M = glm::rotate(M, food[i].angle, glm::vec3(0.0f, 1.0f, 0.0f));
+			M = glm::translate(M, glm::vec3(0.0f, (sin(food[i].angle) - 0.5f)*0.25f, 0.0f));
 			shader->setUnifMat4("M", M);
 			glDrawArrays(GL_TRIANGLES, 0, numOfTriangles);
 		}
