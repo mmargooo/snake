@@ -44,6 +44,9 @@
     <ClInclude Include="Stone.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Fruit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\fragment.fs">

@@ -126,6 +126,7 @@
     <ClInclude Include="Cube.h" />
     <ClInclude Include="Food.h" />
     <ClInclude Include="lodepng.h" />
+    <ClInclude Include="Fruit.h" />
     <ClInclude Include="Obstacle.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Snake.h" />

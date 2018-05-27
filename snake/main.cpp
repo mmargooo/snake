@@ -19,17 +19,20 @@
 // models
 #include "Cube.h"
 #include "Stone.h"
+#include "Fruit.h"
 
 const GLuint WIDTH = 800, HEIGHT = 600;
 float aspect = 800.0 / 600.0;
 
 GLuint vbo_vertices, vbo_texture, vbo_normals;
 GLuint vbo_stone_vertices, vbo_stone_texture, vbo_stone_normals;
+GLuint vbo_fruit_vertices, vbo_fruit_texture, vbo_fruit_normals;
 
 GLuint vao, lightVAO;
 GLuint vao_stone;
+GLuint vao_fruit;
 
-GLuint tex_snake, tex_grass, tex_food, tex_stone;
+GLuint tex_snake, tex_grass, tex_food, tex_stone, tex_fruit;
 Shader * shader, *lampShader;
 
 // left, up, right, down, escape
@@ -101,7 +104,7 @@ int main()
 		angle += 0.002;
 
 		glm::vec3 lightPos(x, 5.0f, z);
-		glm::vec3 cameraPos(0.0f, 15.0f, 10.0f);
+		glm::vec3 cameraPos(0.0f, 15.0f, 15.0f);
 
 		shader->use();
 
@@ -177,16 +180,16 @@ int main()
 
 		// draw food
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, tex_food);
-		glBindVertexArray(vao);
+		glBindTexture(GL_TEXTURE_2D, tex_fruit);
+		glBindVertexArray(vao_fruit);
 		for (int i = 0; i < food.size(); i++) {
 			food[i].angle += 0.005;
 			M = glm::translate(glm::mat4(1.0f), food[i].position);
-			M = glm::scale(M, glm::vec3(0.65f, 0.65f, 0.65f));
+			M = glm::scale(M, glm::vec3(0.35f, 0.35f, 0.35f));
 			M = glm::rotate(M, food[i].angle, glm::vec3(0.0f, 1.0f, 0.0f));
 			M = glm::translate(M, glm::vec3(0.0f, (sin(food[i].angle) - 0.5f)*0.25f, 0.0f));
 			shader->setUnifMat4("M", M);
-			glDrawArrays(GL_TRIANGLES, 0, cube_numOfTriangles);
+			glDrawArrays(GL_TRIANGLES, 0, fruit_numOfTriangles);
 		}
 		glBindVertexArray(0);
 
@@ -196,8 +199,9 @@ int main()
 		glBindVertexArray(vao_stone);
 		for (int i = 0; i < obstacle.size(); i++) {
 			M = glm::translate(glm::mat4(1.0f), obstacle[i].position);
-			M = glm::scale(M, glm::vec3(0.30f, 0.30f, 0.30f));
 			M = glm::rotate(M, obstacle[i].angle, glm::vec3(0.0f, 1.0f, 0.0f));
+			M = glm::translate(M, glm::vec3(0.0f, -0.5f, 0.0f));
+			M = glm::scale(M, glm::vec3(0.85f, 0.85f, 0.85f));
 			shader->setUnifMat4("M", M);
 			glDrawArrays(GL_TRIANGLES, 0, stone_numOfTriangles);
 		}
@@ -219,6 +223,7 @@ int main()
 
 	glDeleteVertexArrays(1, &vao);
 	glDeleteVertexArrays(1, &vao_stone);
+	glDeleteVertexArrays(1, &vao_fruit);
 	glDeleteVertexArrays(1, &lightVAO);
 	glDeleteBuffers(1, &vbo_texture);
 	glDeleteBuffers(1, &vbo_normals);
@@ -226,6 +231,9 @@ int main()
 	glDeleteBuffers(1, &vbo_stone_texture);
 	glDeleteBuffers(1, &vbo_stone_normals);
 	glDeleteBuffers(1, &vbo_stone_texture);
+	glDeleteBuffers(1, &vbo_fruit_texture);
+	glDeleteBuffers(1, &vbo_fruit_normals);
+	glDeleteBuffers(1, &vbo_fruit_texture);
 	glfwTerminate();
 
 	return EXIT_SUCCESS;
@@ -315,6 +323,7 @@ void initOpenGL(GLFWwindow* window) {
 	tex_grass = readTexture("./resources/textures/grass.png");
 	tex_food = readTexture("./resources/textures/texture.png");
 	tex_stone = readTexture("./resources/textures/rock-texture.png");
+	tex_fruit = readTexture("./resources/textures/mandarin.png");
 }
 
 GLuint makeBuffer(void *data, int vertexCount, int vertexSize) {
@@ -336,6 +345,10 @@ void prepareObjects() {
 	vbo_stone_texture = makeBuffer(stone_texture, stone_numOfTriangles, sizeof(float) * 2);
 	vbo_stone_normals = makeBuffer(stone_normals, stone_numOfTriangles, sizeof(float) * 4);
 
+	vbo_fruit_vertices = makeBuffer(fruit, fruit_numOfTriangles, sizeof(float) * 4);
+	vbo_fruit_texture = makeBuffer(fruit_texture, fruit_numOfTriangles, sizeof(float) * 2);
+	vbo_fruit_normals = makeBuffer(fruit_normals, fruit_numOfTriangles, sizeof(float) * 4);
+
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 	shader->setAttrVec4("vertex", vbo_vertices);
@@ -351,6 +364,13 @@ void prepareObjects() {
 	shader->setAttrVec2("texture", vbo_stone_texture);
 	glBindVertexArray(0);
 
+	// --- FRUIT ---
+	glGenVertexArrays(1, &vao_fruit);
+	glBindVertexArray(vao_fruit);
+	shader->setAttrVec4("vertex", vbo_fruit_vertices);
+	shader->setAttrVec4("normal", vbo_fruit_normals);
+	shader->setAttrVec2("texture", vbo_fruit_texture);
+	glBindVertexArray(0);
 
 	// --- LIGHT SHADER ---
 	glGenVertexArrays(1, &lightVAO);
