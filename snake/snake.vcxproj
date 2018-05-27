@@ -123,11 +123,13 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Cube.h" />
     <ClInclude Include="Food.h" />
     <ClInclude Include="lodepng.h" />
     <ClInclude Include="Obstacle.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Snake.h" />
+    <ClInclude Include="Stone.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\fragment.fs" />

@@ -6,147 +6,34 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/functions.hpp>
-#include <time.h>
+#include <time.h>"
 
+#include "lodepng.h"
 #include "Shader.h"
+
+// game objects
 #include "Snake.h"
 #include "Food.h"
 #include "Obstacle.h"
-#include "lodepng.h"
 
-GLfloat cube[] =
-{
-	0.5f,-0.5f,-0.5f,1.0f,
-	-0.5f, 0.5f,-0.5f,1.0f,
-	-0.5f,-0.5f,-0.5f,1.0f,
-
-	0.5f,-0.5f,-0.5f,1.0f,
-	0.5f, 0.5f,-0.5f,1.0f,
-	-0.5f, 0.5f,-0.5f,1.0f,
-
-
-	-0.5f,-0.5f, 0.5f,1.0f,
-	0.5f, 0.5f, 0.5f,1.0f,
-	0.5f,-0.5f, 0.5f,1.0f,
-
-	-0.5f,-0.5f, 0.5f,1.0f,
-	-0.5f, 0.5f, 0.5f,1.0f,
-	0.5f, 0.5f, 0.5f,1.0f,
-
-	0.5f,-0.5f, 0.5f,1.0f,
-	0.5f, 0.5f,-0.5f,1.0f,
-	0.5f,-0.5f,-0.5f,1.0f,
-
-	0.5f,-0.5f, 0.5f,1.0f,
-	0.5f, 0.5f, 0.5f,1.0f,
-	0.5f, 0.5f,-0.5f,1.0f,
-
-	-0.5f,-0.5f,-0.5f,1.0f,
-	-0.5f, 0.5f, 0.5f,1.0f,
-	-0.5f,-0.5f, 0.5f,1.0f,
-
-	-0.5f,-0.5f,-0.5f,1.0f,
-	-0.5f, 0.5f,-0.5f,1.0f,
-	-0.5f, 0.5f, 0.5f,1.0f,
-
-	-0.5f,-0.5f,-0.5f,1.0f,
-	0.5f,-0.5f, 0.5f,1.0f,
-	0.5f,-0.5f,-0.5f,1.0f,
-
-	-0.5f,-0.5f,-0.5f,1.0f,
-	-0.5f,-0.5f, 0.5f,1.0f,
-	0.5f,-0.5f, 0.5f,1.0f,
-
-	-0.5f, 0.5f, 0.5f,1.0f,
-	0.5f, 0.5f,-0.5f,1.0f,
-	0.5f, 0.5f, 0.5f,1.0f,
-
-	-0.5f, 0.5f, 0.5f,1.0f,
-	-0.5f, 0.5f,-0.5f,1.0f,
-	0.5f, 0.5f,-0.5f,1.0f,
-};
-GLfloat cube_texture[] =
-{
-	1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f,
-	1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-
-	1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f,
-	1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-
-	1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f,
-	1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-
-	1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f,
-	1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-
-	1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f,
-	1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-
-	1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f,
-	1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
-};
-GLfloat cube_normals[] =
-{
-	0.0f, 0.0f,-1.0f,0.0f,
-	0.0f, 0.0f,-1.0f,0.0f,
-	0.0f, 0.0f,-1.0f,0.0f,
-
-	0.0f, 0.0f,-1.0f,0.0f,
-	0.0f, 0.0f,-1.0f,0.0f,
-	0.0f, 0.0f,-1.0f,0.0f,
-
-	0.0f, 0.0f, 1.0f,0.0f,
-	0.0f, 0.0f, 1.0f,0.0f,
-	0.0f, 0.0f, 1.0f,0.0f,
-
-	0.0f, 0.0f, 1.0f,0.0f,
-	0.0f, 0.0f, 1.0f,0.0f,
-	0.0f, 0.0f, 1.0f,0.0f,
-
-	1.0f, 0.0f, 0.0f,0.0f,
-	1.0f, 0.0f, 0.0f,0.0f,
-	1.0f, 0.0f, 0.0f,0.0f,
-
-	1.0f, 0.0f, 0.0f,0.0f,
-	1.0f, 0.0f, 0.0f,0.0f,
-	1.0f, 0.0f, 0.0f,0.0f,
-
-	-1.0f, 0.0f, 0.0f,0.0f,
-	-1.0f, 0.0f, 0.0f,0.0f,
-	-1.0f, 0.0f, 0.0f,0.0f,
-
-	-1.0f, 0.0f, 0.0f,0.0f,
-	-1.0f, 0.0f, 0.0f,0.0f,
-	-1.0f, 0.0f, 0.0f,0.0f,
-
-	0.0f,-1.0f, 0.0f,0.0f,
-	0.0f,-1.0f, 0.0f,0.0f,
-	0.0f,-1.0f, 0.0f,0.0f,
-
-	0.0f,-1.0f, 0.0f,0.0f,
-	0.0f,-1.0f, 0.0f,0.0f,
-	0.0f,-1.0f, 0.0f,0.0f,
-
-	0.0f, 1.0f, 0.0f,0.0f,
-	0.0f, 1.0f, 0.0f,0.0f,
-	0.0f, 1.0f, 0.0f,0.0f,
-
-	0.0f, 1.0f, 0.0f,0.0f,
-	0.0f, 1.0f, 0.0f,0.0f,
-	0.0f, 1.0f, 0.0f,0.0f,
-};
-GLuint numOfTriangles = 36;
+// models
+#include "Cube.h"
+#include "Stone.h"
 
 const GLuint WIDTH = 800, HEIGHT = 600;
-float aspect = 800.0/600.0;
+float aspect = 800.0 / 600.0;
 
 GLuint vbo_vertices, vbo_texture, vbo_normals;
+GLuint vbo_stone_vertices, vbo_stone_texture, vbo_stone_normals;
+
 GLuint vao, lightVAO;
+GLuint vao_stone;
+
 GLuint tex_snake, tex_grass, tex_food, tex_stone;
-Shader * shader, * lampShader;
+Shader * shader, *lampShader;
 
 // left, up, right, down, escape
-bool keys[] = {false, false, false, false}; 
+bool keys[] = { false, false, false, false };
 bool keyPressed = false;
 
 // timing
@@ -188,7 +75,7 @@ int main()
 		std::cout << "Failed to initialize GLEW" << std::endl;
 		return EXIT_FAILURE;
 	}
-	
+
 	Snake snake;
 
 	generateObstacles(10, snake);
@@ -214,10 +101,10 @@ int main()
 		angle += 0.002;
 
 		glm::vec3 lightPos(x, 5.0f, z);
-		glm::vec3 cameraPos(0.0f, 15.0f, 15.0f);
+		glm::vec3 cameraPos(0.0f, 15.0f, 10.0f);
 
 		shader->use();
-		
+
 		shader->setUnifVec3("directionalLight.direction", glm::vec3(5.0f, 10.0f, 5.0f));
 		shader->setUnifVec3("directionalLight.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
 		shader->setUnifVec3("directionalLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
@@ -247,7 +134,7 @@ int main()
 		shader->setUnifMat4("P", P);
 		shader->setUnifMat4("V", V);
 		shader->setUnifMat4("M", M);
-		
+
 		if (glfwGetTime() > timeInt) {
 			snake.changeDirection(keys);
 			snake.checkCollision(&food, &obstacle);
@@ -255,7 +142,7 @@ int main()
 			clearKeys();
 			glfwSetTime(0);
 		}
-		
+
 		// draw background
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tex_grass);
@@ -264,7 +151,7 @@ int main()
 			for (int j = 0; j < boardHeight; j++) {
 				M = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f*(-boardWidth / 2 + i), 0.0f, 1.0f*(-boardHeight / 2 + j)));
 				shader->setUnifMat4("M", M);
-				glDrawArrays(GL_TRIANGLES, 0, numOfTriangles);
+				glDrawArrays(GL_TRIANGLES, 0, cube_numOfTriangles);
 			}
 		}
 		glBindVertexArray(0);
@@ -279,12 +166,12 @@ int main()
 			M = glm::translate(glm::mat4(1.0f), snake.getElem(i));
 			//M = glm::translate(M, adj);
 			shader->setUnifMat4("M", M);
-			glDrawArrays(GL_TRIANGLES, 0, numOfTriangles);
+			glDrawArrays(GL_TRIANGLES, 0, cube_numOfTriangles);
 
 			/*M = glm::translate(glm::mat4(1.0f), snake.getPrevElem(i));
 			M = glm::translate(M, glm::vec3(0.0f, 1.0f, 0.0f));
 			shader->setUnifMat4("M", M);
-			glDrawArrays(GL_TRIANGLES, 0, numOfTriangles);*/
+			glDrawArrays(GL_TRIANGLES, 0, cube_numOfTriangles);*/
 		}
 		glBindVertexArray(0);
 
@@ -299,18 +186,20 @@ int main()
 			M = glm::rotate(M, food[i].angle, glm::vec3(0.0f, 1.0f, 0.0f));
 			M = glm::translate(M, glm::vec3(0.0f, (sin(food[i].angle) - 0.5f)*0.25f, 0.0f));
 			shader->setUnifMat4("M", M);
-			glDrawArrays(GL_TRIANGLES, 0, numOfTriangles);
+			glDrawArrays(GL_TRIANGLES, 0, cube_numOfTriangles);
 		}
 		glBindVertexArray(0);
 
 		// draw obstacles
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tex_stone);
-		glBindVertexArray(vao);
+		glBindVertexArray(vao_stone);
 		for (int i = 0; i < obstacle.size(); i++) {
 			M = glm::translate(glm::mat4(1.0f), obstacle[i].position);
+			M = glm::scale(M, glm::vec3(0.30f, 0.30f, 0.30f));
+			M = glm::rotate(M, obstacle[i].angle, glm::vec3(0.0f, 1.0f, 0.0f));
 			shader->setUnifMat4("M", M);
-			glDrawArrays(GL_TRIANGLES, 0, numOfTriangles);
+			glDrawArrays(GL_TRIANGLES, 0, stone_numOfTriangles);
 		}
 		glBindVertexArray(0);
 
@@ -322,17 +211,21 @@ int main()
 		lampShader->setUnifMat4("M", M);
 
 		glBindVertexArray(lightVAO);
-		glDrawArrays(GL_TRIANGLES, 0, numOfTriangles);
+		glDrawArrays(GL_TRIANGLES, 0, cube_numOfTriangles);
 		glBindVertexArray(0);
-		
+
 		glfwSwapBuffers(window);
 	}
 
 	glDeleteVertexArrays(1, &vao);
+	glDeleteVertexArrays(1, &vao_stone);
 	glDeleteVertexArrays(1, &lightVAO);
 	glDeleteBuffers(1, &vbo_texture);
 	glDeleteBuffers(1, &vbo_normals);
 	glDeleteBuffers(1, &vbo_texture);
+	glDeleteBuffers(1, &vbo_stone_texture);
+	glDeleteBuffers(1, &vbo_stone_normals);
+	glDeleteBuffers(1, &vbo_stone_texture);
 	glfwTerminate();
 
 	return EXIT_SUCCESS;
@@ -421,23 +314,27 @@ void initOpenGL(GLFWwindow* window) {
 	tex_snake = readTexture("./resources/textures/metal.png");
 	tex_grass = readTexture("./resources/textures/grass.png");
 	tex_food = readTexture("./resources/textures/texture.png");
-	tex_stone = readTexture("./resources/textures/stone.png");
+	tex_stone = readTexture("./resources/textures/rock-texture.png");
 }
 
 GLuint makeBuffer(void *data, int vertexCount, int vertexSize) {
 	GLuint handle;
 
 	glGenBuffers(1, &handle);
-	glBindBuffer(GL_ARRAY_BUFFER, handle); 
+	glBindBuffer(GL_ARRAY_BUFFER, handle);
 	glBufferData(GL_ARRAY_BUFFER, vertexCount*vertexSize, data, GL_STATIC_DRAW);
 
 	return handle;
 }
 
 void prepareObjects() {
-	vbo_vertices = makeBuffer(cube, numOfTriangles, sizeof(float) * 4);
-	vbo_texture = makeBuffer(cube_texture, numOfTriangles, sizeof(float) * 2);
-	vbo_normals = makeBuffer(cube_normals, numOfTriangles, sizeof(float) * 4);
+	vbo_vertices = makeBuffer(cube, cube_numOfTriangles, sizeof(float) * 4);
+	vbo_texture = makeBuffer(cube_texture, cube_numOfTriangles, sizeof(float) * 2);
+	vbo_normals = makeBuffer(cube_normals, cube_numOfTriangles, sizeof(float) * 4);
+
+	vbo_stone_vertices = makeBuffer(stone, stone_numOfTriangles, sizeof(float) * 4);
+	vbo_stone_texture = makeBuffer(stone_texture, stone_numOfTriangles, sizeof(float) * 2);
+	vbo_stone_normals = makeBuffer(stone_normals, stone_numOfTriangles, sizeof(float) * 4);
 
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
@@ -445,6 +342,15 @@ void prepareObjects() {
 	shader->setAttrVec4("normal", vbo_normals);
 	shader->setAttrVec2("texture", vbo_texture);
 	glBindVertexArray(0);
+
+	// --- STONE ---
+	glGenVertexArrays(1, &vao_stone);
+	glBindVertexArray(vao_stone);
+	shader->setAttrVec4("vertex", vbo_stone_vertices);
+	shader->setAttrVec4("normal", vbo_stone_normals);
+	shader->setAttrVec2("texture", vbo_stone_texture);
+	glBindVertexArray(0);
+
 
 	// --- LIGHT SHADER ---
 	glGenVertexArrays(1, &lightVAO);
@@ -478,8 +384,8 @@ GLuint readTexture(char* filename) {
 	std::vector<unsigned char> image;
 	unsigned width, height;
 	unsigned error = lodepng::decode(image, width, height, filename);
-	glGenTextures(1, &tex); 
-	glBindTexture(GL_TEXTURE_2D, tex); 
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
 	glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char*)image.data());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
