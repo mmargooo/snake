@@ -74,7 +74,7 @@ public:
 			if (direction == 'l' || direction == 'r') direction = 'd';
 		}
 	}
-	void checkCollision(std::vector<Food> * food, std::vector<Obstacle> * obstacle) {
+	void checkCollision(std::vector<Food> * food, std::vector<Obstacle> * obstacle, int * numOfFood) {
 		glm::vec3 nextHead;
 		if (direction == 'r') nextHead = glm::vec3(1.0f, 0.0f, 0.0f);
 		else if (direction == 'l') nextHead = glm::vec3(-1.0f, 0.0f, 0.0f);
@@ -94,6 +94,7 @@ public:
 				ateFood = true;
 				elem.insert(elem.begin() + head, (elem[head] + nextHead));
 				prevElem.push_back((elem[head] - nextHead));
+				(*numOfFood)--;
 			}
 		}
 
@@ -117,6 +118,12 @@ public:
 	}
 	glm::vec3 getHead() {
 		return elem[head];
+	}
+	int getHeadIndex() {
+		return head;
+	}
+	bool getDied() {
+		return died;
 	}
 };
 
