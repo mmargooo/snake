@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #define GLEW_STATIC
 #include <gl/glew.h>
 #include <glfw/glfw3.h>
@@ -113,17 +114,17 @@ int main()
 
 		shader->setUnifVec3("directionalLight.direction", glm::vec3(5.0f, 10.0f, 5.0f));
 		shader->setUnifVec3("directionalLight.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
-		shader->setUnifVec3("directionalLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
-		shader->setUnifVec3("directionalLight.specular", glm::vec3(0.75f, 0.75f, 0.75f));
+		float dir_diffuse = std::max(0.4f - ((float)timeElapsed * 0.005), (double)0.0f);
+		shader->setUnifVec3("directionalLight.diffuse", glm::vec3(dir_diffuse, dir_diffuse, dir_diffuse));
+		float dir_specular = std::max(0.75f - ((float)timeElapsed * 0.005), (double)0.0f);
+		shader->setUnifVec3("directionalLight.specular", glm::vec3(dir_specular, dir_specular, dir_specular));
 
 		shader->setUnifVec3("pointLight.position", lightPos);
-		shader->setUnifVec3("pointLight.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
-		shader->setUnifVec3("pointLight.diffuse", glm::vec3(0.75f, 0.75f, 0.75f));
-		shader->setUnifVec3("pointLight.specular", glm::vec3(0.55f, 0.55f, 0.55f));
-		/*shader->setUnifVec3("pointLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
-		shader->setUnifVec3("pointLight.diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
-		shader->setUnifVec3("pointLight.specular", glm::vec3(0.0f, 0.0f, 0.0f));*/
-
+		shader->setUnifVec3("pointLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
+		float point_diffuse = std::max(0.75f - ((float)timeElapsed * 0.005), (double)0.0f);
+		shader->setUnifVec3("pointLight.diffuse", glm::vec3(point_diffuse, point_diffuse, point_diffuse));
+		float point_specular = std::max(0.55f - ((float)timeElapsed * 0.005), (double)0.0f);
+		shader->setUnifVec3("pointLight.specular", glm::vec3(point_specular, point_specular, point_specular));
 
 		/*glm::vec3 adj = (snake.getPrevElem(snake.getHeadIndex()) - snake.getHead()) * (1.0f - ratio);
 		if (!(fabs(adj.x) > 0.5f || fabs(adj.z) > 0.5f) || snake.getDied()) {
@@ -132,8 +133,10 @@ int main()
 		shader->setUnifVec3("spotLight.position", snake.getHead() + glm::vec3(0.0f, 10.0f, 0.0f));
 		shader->setUnifVec3("spotLight.direction", -glm::vec3(0.0f, 10.0f, 0.0f));
 		shader->setUnifVec3("spotLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
-		shader->setUnifVec3("spotLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
-		shader->setUnifVec3("spotLight.specular", glm::vec3(0.3f, 0.3f, 0.3f));
+		float spotilight_diffuse = std::min(((float)timeElapsed * 0.005), (double)0.5f);
+		shader->setUnifVec3("spotLight.diffuse", glm::vec3(spotilight_diffuse, spotilight_diffuse, spotilight_diffuse));
+		float spotilight_specular = std::min(((float)timeElapsed * 0.005), (double)0.35f);
+		shader->setUnifVec3("spotLight.specular", glm::vec3(spotilight_specular, spotilight_specular, spotilight_specular));
 		/*shader->setUnifVec3("spotLight.diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
 		shader->setUnifVec3("spotLight.specular", glm::vec3(0.0f, 0.0f, 0.0f));*/
 		glUniform1f(shader->getUniformLocation("spotLight.cutOff"), glm::cos(glm::radians(1.0f)));
@@ -157,6 +160,7 @@ int main()
 			}
 			snake.move();
 			clearKeys();
+			timeElapsed++;
 			glfwSetTime(0);
 		}
 
