@@ -22,6 +22,7 @@
 #include "Stone.h"
 #include "Fruit.h"
 #include "Mushroom.h"
+#include "Flower.h"
 
 const GLuint WIDTH = 800, HEIGHT = 600;
 float aspect = 800.0 / 600.0;
@@ -30,13 +31,15 @@ GLuint vbo_vertices, vbo_texture, vbo_normals;
 GLuint vbo_stone_vertices, vbo_stone_texture, vbo_stone_normals;
 GLuint vbo_fruit_vertices, vbo_fruit_texture, vbo_fruit_normals;
 GLuint vbo_mushroom_vertices, vbo_mushroom_texture, vbo_mushroom_normals;
+GLuint vbo_flower_vertices, vbo_flower_texture, vbo_flower_normals;
 
 GLuint vao, lightVAO;
 GLuint vao_stone;
 GLuint vao_fruit;
 GLuint vao_mushroom;
+GLuint vao_flower;
 
-GLuint tex_snake, tex_grass, tex_stone, tex_fruit, tex_box, tex_mushroom;
+GLuint tex_snake, tex_grass, tex_stone, tex_fruit, tex_box, tex_mushroom, tex_flower;
 Shader * shader, *lampShader;
 
 // left, up, right, down, escape
@@ -237,7 +240,7 @@ int main()
 		}
 		glBindVertexArray(0);
 
-		// draw obstacles
+		// draw stones
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tex_stone);
 		glBindVertexArray(vao_stone);
@@ -267,6 +270,24 @@ int main()
 		}
 		glBindVertexArray(0);
 
+		// draw flower
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, tex_flower);
+		glBindVertexArray(vao_flower);
+		for (int i = 0; i < obstacle.size(); i++) {
+			if (obstacle[i].type == 2) {
+				M = glm::translate(glm::mat4(1.0f), (glm::vec3(0.0f, 0.0f, 0.0f) - obstacle[i].position) * glm::vec3(-0.95f, -0.95f, -0.95f));
+				//M = glm::translate(glm::mat4(1.0f), (glm::vec3(0.0f, 0.0f, 0.0f) - obstacle[i].position) * glm::vec3(-0.95f, -0.95f, -0.95f));
+				//M = glm::translate(M, glm::vec3(0.0f, 2.0f, 0.0f));
+				M = glm::scale(M, glm::vec3(1.5f, 1.5f, 1.5f));
+				shader->setUnifMat4("M", M);
+				glDrawArrays(GL_TRIANGLES, 0, flower_numOfTriangles);
+			}
+		}
+		glBindVertexArray(0);
+
+
+
 		/*lampShader->use();
 		M = glm::translate(glm::mat4(1.0f), lightPos);
 		M = glm::scale(M, glm::vec3(0.2f));
@@ -285,6 +306,7 @@ int main()
 	glDeleteVertexArrays(1, &vao_stone);
 	glDeleteVertexArrays(1, &vao_fruit);
 	glDeleteVertexArrays(1, &vao_mushroom);
+	glDeleteVertexArrays(1, &vao_flower);
 	glDeleteVertexArrays(1, &lightVAO);
 	glDeleteBuffers(1, &vbo_texture);
 	glDeleteBuffers(1, &vbo_normals);
@@ -298,6 +320,9 @@ int main()
 	glDeleteBuffers(1, &vbo_mushroom_texture);
 	glDeleteBuffers(1, &vbo_mushroom_normals);
 	glDeleteBuffers(1, &vbo_mushroom_texture);
+	glDeleteBuffers(1, &vbo_flower_texture);
+	glDeleteBuffers(1, &vbo_flower_normals);
+	glDeleteBuffers(1, &vbo_flower_texture);
 
 	glfwTerminate();
 
@@ -450,6 +475,7 @@ void initOpenGL(GLFWwindow* window) {
 	tex_fruit = readTexture("./resources/textures/mandarin.png");
 	tex_box = readTexture("./resources/textures/box.png");
 	tex_mushroom = readTexture("./resources/textures/mushroom.png");
+	tex_flower = readTexture("./resources/textures/flower.png");
 }
 
 GLuint makeBuffer(void *data, int vertexCount, int vertexSize) {
@@ -478,6 +504,10 @@ void prepareObjects() {
 	vbo_mushroom_vertices = makeBuffer(mushroom, mushroom_numOfTriangles, sizeof(float) * 4);
 	vbo_mushroom_texture = makeBuffer(mushroom_texture, mushroom_numOfTriangles, sizeof(float) * 2);
 	vbo_mushroom_normals = makeBuffer(mushroom_normals, mushroom_numOfTriangles, sizeof(float) * 4);
+
+	vbo_flower_vertices = makeBuffer(flower, flower_numOfTriangles, sizeof(float) * 4);
+	vbo_flower_texture = makeBuffer(flower_texture, flower_numOfTriangles, sizeof(float) * 2);
+	vbo_flower_normals = makeBuffer(flower_normals, flower_numOfTriangles, sizeof(float) * 4);
 
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
@@ -508,6 +538,14 @@ void prepareObjects() {
 	shader->setAttrVec4("vertex", vbo_mushroom_vertices);
 	shader->setAttrVec4("normal", vbo_mushroom_normals);
 	shader->setAttrVec2("texture", vbo_mushroom_texture);
+	glBindVertexArray(0);
+
+	// --- FLOWER ---
+	glGenVertexArrays(1, &vao_flower);
+	glBindVertexArray(vao_flower);
+	shader->setAttrVec4("vertex", vbo_flower_vertices);
+	shader->setAttrVec4("normal", vbo_flower_normals);
+	shader->setAttrVec2("texture", vbo_flower_texture);
 	glBindVertexArray(0);
 
 	// --- LIGHT SHADER ---
