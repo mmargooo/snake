@@ -124,6 +124,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Cube.h" />
+    <ClInclude Include="Mushroom.h" />
     <ClInclude Include="Food.h" />
     <ClInclude Include="lodepng.h" />
     <ClInclude Include="Fruit.h" />

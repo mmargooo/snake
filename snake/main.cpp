@@ -21,6 +21,7 @@
 #include "Cube.h"
 #include "Stone.h"
 #include "Fruit.h"
+#include "Mushroom.h"
 
 const GLuint WIDTH = 800, HEIGHT = 600;
 float aspect = 800.0 / 600.0;
@@ -28,12 +29,14 @@ float aspect = 800.0 / 600.0;
 GLuint vbo_vertices, vbo_texture, vbo_normals;
 GLuint vbo_stone_vertices, vbo_stone_texture, vbo_stone_normals;
 GLuint vbo_fruit_vertices, vbo_fruit_texture, vbo_fruit_normals;
+GLuint vbo_mushroom_vertices, vbo_mushroom_texture, vbo_mushroom_normals;
 
 GLuint vao, lightVAO;
 GLuint vao_stone;
 GLuint vao_fruit;
+GLuint vao_mushroom;
 
-GLuint tex_snake, tex_grass, tex_food, tex_stone, tex_fruit;
+GLuint tex_snake, tex_grass, tex_stone, tex_fruit, tex_box, tex_mushroom;
 Shader * shader, *lampShader;
 
 // left, up, right, down, escape
@@ -69,9 +72,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void clearKeys();
 GLuint readTexture(char* filename);
 void windowResize(GLFWwindow* window, int width, int height);
-void generateFood(int numOfFood, Snake snake);
-void generateObstacles(int numOfObstacles, Snake snake);
-void genFood(Snake snake);
+void generateFood(int numOfFood, Snake snake, float mapRadius);
+void generateObstacles(int numOfObstacles, Snake snake, float mapRadius);
+void genFood(Snake snake, float mapRadius);
 void changeLightProperties();
 
 int main()
@@ -96,8 +99,8 @@ int main()
 
 	Snake snake;
 
-	generateObstacles(10, snake);
-	generateFood(3, snake);
+	generateObstacles(4, snake, mapRadius);
+	generateFood(3, snake, mapRadius);
 
 	initOpenGL(window);
 	glfwSetTime(0);
@@ -119,7 +122,7 @@ int main()
 		angle += 0.002;
 
 		glm::vec3 lightPos(x, 5.0f, z);
-		glm::vec3 cameraPos(0.0f, 15.0f, 12.0f);
+		glm::vec3 cameraPos(0.0f, 15.0f, 10.0f);
 
 		shader->use();
 		shader->setUnifVec3("directionalLight.direction", glm::vec3(5.0f, 10.0f, 5.0f));
@@ -158,7 +161,7 @@ int main()
 			snake.changeDirection(keys);
 			snake.checkCollision(mapRadius, &food, &obstacle, &numOfFood);
 			if (numOfFood < 3) {
-				genFood(snake);
+				genFood(snake, mapRadius);
 			}
 			snake.move();
 			clearKeys();
@@ -178,6 +181,20 @@ int main()
 			}
 		}
 		glBindVertexArray(0);
+
+		// draw boxes
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, tex_box);
+		glBindVertexArray(vao);
+		for (int i = 0; i < boardWidth; i++) {
+			for (int j = 0; j < boardHeight; j++) {
+				if (i == 0 || j == 0 || i == boardWidth - 1 || j == boardHeight - 1) {
+					M = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f*(-boardWidth / 2 + i), 1.0f, 1.0f*(-boardHeight / 2 + j)));
+					shader->setUnifMat4("M", M);
+					glDrawArrays(GL_TRIANGLES, 0, cube_numOfTriangles);
+				}
+			}
+		}
 
 		// draw snake
 		glActiveTexture(GL_TEXTURE0);
@@ -221,7 +238,7 @@ int main()
 		glBindVertexArray(0);
 
 		// draw obstacles
-		glActiveTexture(GL_TEXTURE0);
+		/*glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tex_stone);
 		glBindVertexArray(vao_stone);
 		for (int i = 0; i < obstacle.size(); i++) {
@@ -231,6 +248,18 @@ int main()
 			M = glm::scale(M, glm::vec3(0.85f, 0.85f, 0.85f));
 			shader->setUnifMat4("M", M);
 			glDrawArrays(GL_TRIANGLES, 0, stone_numOfTriangles);
+		}
+		glBindVertexArray(0);*/
+
+		// draw mushroom
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, tex_mushroom);
+		glBindVertexArray(vao_mushroom);
+		for (int i = 0; i < obstacle.size(); i++) {
+			M = glm::translate(glm::mat4(1.0f), (glm::vec3(0.0f, 0.0f, 0.0f) - obstacle[i].position) * glm::vec3(-0.95f,-0.95f,-0.95f));
+			M = glm::translate(M, glm::vec3(0.0f, 0.0f, 0.25f));
+			shader->setUnifMat4("M", M);
+			glDrawArrays(GL_TRIANGLES, 0, mushroom_numOfTriangles);
 		}
 		glBindVertexArray(0);
 
@@ -251,6 +280,7 @@ int main()
 	glDeleteVertexArrays(1, &vao);
 	glDeleteVertexArrays(1, &vao_stone);
 	glDeleteVertexArrays(1, &vao_fruit);
+	glDeleteVertexArrays(1, &vao_mushroom);
 	glDeleteVertexArrays(1, &lightVAO);
 	glDeleteBuffers(1, &vbo_texture);
 	glDeleteBuffers(1, &vbo_normals);
@@ -261,6 +291,10 @@ int main()
 	glDeleteBuffers(1, &vbo_fruit_texture);
 	glDeleteBuffers(1, &vbo_fruit_normals);
 	glDeleteBuffers(1, &vbo_fruit_texture);
+	glDeleteBuffers(1, &vbo_mushroom_texture);
+	glDeleteBuffers(1, &vbo_mushroom_normals);
+	glDeleteBuffers(1, &vbo_mushroom_texture);
+
 	glfwTerminate();
 
 	return EXIT_SUCCESS;
@@ -311,15 +345,16 @@ void changeLightProperties() {
 	}
 }
 
-void genFood(Snake snake) {
+void genFood(Snake snake, float mapRadius) {
+	int mr = (int)mapRadius;
 	bool checkOthers;
 
 	int x, z;
 	do {
 		checkOthers = false;
 
-		x = -7 + (rand() % static_cast<int>(7 - (-7) + 1));
-		z = -7 + (rand() % static_cast<int>(7 - (-7) + 1));
+		x = -mr + (rand() % static_cast<int>(mr - (-mr) + 1));
+		z = -mr + (rand() % static_cast<int>(mr - (-mr) + 1));
 		glm::vec3 pos = glm::vec3((float)x, 1.0f, (float)z);
 		for (int j = 0; j < snake.elem.size(); j++) {
 			if (snake.elem[j] == pos)
@@ -341,13 +376,14 @@ void genFood(Snake snake) {
 	numOfFood++;
 }
 
-void generateFood(int numOfFood, Snake snake) {
+void generateFood(int numOfFood, Snake snake, float mapRadius) {
 	for (int i = 0; i < numOfFood; i++) {
-		genFood(snake);
+		genFood(snake, mapRadius);
 	}
 }
 
-void generateObstacles(int numOfObstacles, Snake snake) {
+void generateObstacles(int numOfObstacles, Snake snake, float mapRadius) {
+	int mr = (int)mapRadius;
 	for (int i = 0; i < numOfObstacles; i++) {
 		bool checkOthers = false;
 
@@ -355,8 +391,8 @@ void generateObstacles(int numOfObstacles, Snake snake) {
 		do {
 			checkOthers = false;
 
-			x = -7 + (rand() % static_cast<int>(7 - (-7) + 1));
-			z = -7 + (rand() % static_cast<int>(7 - (-7) + 1));
+			x = -mr + (rand() % static_cast<int>(mr - (-mr) + 1));
+			z = -mr + (rand() % static_cast<int>(mr - (-mr) + 1));
 			glm::vec3 pos = glm::vec3((float)x, 1.0f, (float)z);
 			for (int j = 0; j < snake.elem.size(); j++) {
 				if (snake.elem[j] == pos)
@@ -398,9 +434,10 @@ void initOpenGL(GLFWwindow* window) {
 
 	tex_snake = readTexture("./resources/textures/metal.png");
 	tex_grass = readTexture("./resources/textures/grass.png");
-	tex_food = readTexture("./resources/textures/texture.png");
 	tex_stone = readTexture("./resources/textures/rock-texture.png");
 	tex_fruit = readTexture("./resources/textures/mandarin.png");
+	tex_box = readTexture("./resources/textures/box.png");
+	tex_mushroom = readTexture("./resources/textures/mushroom.png");
 }
 
 GLuint makeBuffer(void *data, int vertexCount, int vertexSize) {
@@ -426,6 +463,10 @@ void prepareObjects() {
 	vbo_fruit_texture = makeBuffer(fruit_texture, fruit_numOfTriangles, sizeof(float) * 2);
 	vbo_fruit_normals = makeBuffer(fruit_normals, fruit_numOfTriangles, sizeof(float) * 4);
 
+	vbo_mushroom_vertices = makeBuffer(mushroom, mushroom_numOfTriangles, sizeof(float) * 4);
+	vbo_mushroom_texture = makeBuffer(mushroom_texture, mushroom_numOfTriangles, sizeof(float) * 2);
+	vbo_mushroom_normals = makeBuffer(mushroom_normals, mushroom_numOfTriangles, sizeof(float) * 4);
+
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 	shader->setAttrVec4("vertex", vbo_vertices);
@@ -447,6 +488,14 @@ void prepareObjects() {
 	shader->setAttrVec4("vertex", vbo_fruit_vertices);
 	shader->setAttrVec4("normal", vbo_fruit_normals);
 	shader->setAttrVec2("texture", vbo_fruit_texture);
+	glBindVertexArray(0);
+
+	// --- MUSHROOM ---
+	glGenVertexArrays(1, &vao_mushroom);
+	glBindVertexArray(vao_mushroom);
+	shader->setAttrVec4("vertex", vbo_mushroom_vertices);
+	shader->setAttrVec4("normal", vbo_mushroom_normals);
+	shader->setAttrVec2("texture", vbo_mushroom_texture);
 	glBindVertexArray(0);
 
 	// --- LIGHT SHADER ---
