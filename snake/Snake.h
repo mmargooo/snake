@@ -60,7 +60,7 @@ public:
 		}
 		
 	}
-	void changeDirection(bool keys[4]) {
+	void changeDirection(bool * keys) {
 		if (keys[0]) {
 			if (direction == 'u' || direction == 'd') direction = 'l';
 		}
@@ -74,7 +74,7 @@ public:
 			if (direction == 'l' || direction == 'r') direction = 'd';
 		}
 	}
-	void checkCollision(std::vector<Food> * food, std::vector<Obstacle> * obstacle, int * numOfFood) {
+	void checkCollision(float mapRadius, std::vector<Food> * food, std::vector<Obstacle> * obstacle, int * numOfFood) {
 		glm::vec3 nextHead;
 		if (direction == 'r') nextHead = glm::vec3(1.0f, 0.0f, 0.0f);
 		else if (direction == 'l') nextHead = glm::vec3(-1.0f, 0.0f, 0.0f);
@@ -83,7 +83,7 @@ public:
 
 		glm::vec3 headPos = elem[head] + nextHead;
 		// check outside of the map
-		if (headPos.x > 7.0f || headPos.x < -7.0f || headPos.z > 7.0f || headPos.z < -7.0f)
+		if (headPos.x > mapRadius || headPos.x < -mapRadius || headPos.z > mapRadius || headPos.z < -mapRadius)
 			died = true;
 
 		// check collision with food

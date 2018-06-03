@@ -48,6 +48,16 @@ float angle = 0.0f;
 
 int boardWidth = 15;
 int boardHeight = 15;
+float mapRadius = 6.0f;
+
+// some of the lighting properties
+int lightMode = 0;
+float dir_diffuse = 0.4f;
+float dir_specular = 0.75f;
+float point_diffuse = 0.75f;
+float point_specular = 0.55f;
+float spotilight_diffuse = 0.0f;
+float spotilight_specular = 0.0f;
 
 std::vector<Food> food;
 std::vector<Obstacle> obstacle;
@@ -62,6 +72,7 @@ void windowResize(GLFWwindow* window, int width, int height);
 void generateFood(int numOfFood, Snake snake);
 void generateObstacles(int numOfObstacles, Snake snake);
 void genFood(Snake snake);
+void changeLightProperties();
 
 int main()
 {
@@ -108,22 +119,17 @@ int main()
 		angle += 0.002;
 
 		glm::vec3 lightPos(x, 5.0f, z);
-		glm::vec3 cameraPos(0.0f, 15.0f, 10.0f);
+		glm::vec3 cameraPos(0.0f, 15.0f, 12.0f);
 
 		shader->use();
-
 		shader->setUnifVec3("directionalLight.direction", glm::vec3(5.0f, 10.0f, 5.0f));
 		shader->setUnifVec3("directionalLight.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
-		float dir_diffuse = std::max(0.4f - ((float)timeElapsed * 0.005), (double)0.0f);
 		shader->setUnifVec3("directionalLight.diffuse", glm::vec3(dir_diffuse, dir_diffuse, dir_diffuse));
-		float dir_specular = std::max(0.75f - ((float)timeElapsed * 0.005), (double)0.0f);
 		shader->setUnifVec3("directionalLight.specular", glm::vec3(dir_specular, dir_specular, dir_specular));
 
 		shader->setUnifVec3("pointLight.position", lightPos);
 		shader->setUnifVec3("pointLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
-		float point_diffuse = std::max(0.75f - ((float)timeElapsed * 0.005), (double)0.0f);
 		shader->setUnifVec3("pointLight.diffuse", glm::vec3(point_diffuse, point_diffuse, point_diffuse));
-		float point_specular = std::max(0.55f - ((float)timeElapsed * 0.005), (double)0.0f);
 		shader->setUnifVec3("pointLight.specular", glm::vec3(point_specular, point_specular, point_specular));
 
 		/*glm::vec3 adj = (snake.getPrevElem(snake.getHeadIndex()) - snake.getHead()) * (1.0f - ratio);
@@ -133,12 +139,8 @@ int main()
 		shader->setUnifVec3("spotLight.position", snake.getHead() + glm::vec3(0.0f, 10.0f, 0.0f));
 		shader->setUnifVec3("spotLight.direction", -glm::vec3(0.0f, 10.0f, 0.0f));
 		shader->setUnifVec3("spotLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
-		float spotilight_diffuse = std::min(((float)timeElapsed * 0.005), (double)0.5f);
 		shader->setUnifVec3("spotLight.diffuse", glm::vec3(spotilight_diffuse, spotilight_diffuse, spotilight_diffuse));
-		float spotilight_specular = std::min(((float)timeElapsed * 0.005), (double)0.35f);
 		shader->setUnifVec3("spotLight.specular", glm::vec3(spotilight_specular, spotilight_specular, spotilight_specular));
-		/*shader->setUnifVec3("spotLight.diffuse", glm::vec3(0.0f, 0.0f, 0.0f));
-		shader->setUnifVec3("spotLight.specular", glm::vec3(0.0f, 0.0f, 0.0f));*/
 		glUniform1f(shader->getUniformLocation("spotLight.cutOff"), glm::cos(glm::radians(1.0f)));
 		glUniform1f(shader->getUniformLocation("spotLight.outerCutOff"), glm::cos(glm::radians(15.0f)));
 
@@ -154,13 +156,13 @@ int main()
 
 		if (glfwGetTime() > timeInt) {
 			snake.changeDirection(keys);
-			snake.checkCollision(&food, &obstacle, &numOfFood);
+			snake.checkCollision(mapRadius, &food, &obstacle, &numOfFood);
 			if (numOfFood < 3) {
 				genFood(snake);
 			}
 			snake.move();
 			clearKeys();
-			timeElapsed++;
+			changeLightProperties();
 			glfwSetTime(0);
 		}
 
@@ -232,7 +234,7 @@ int main()
 		}
 		glBindVertexArray(0);
 
-		lampShader->use();
+		/*lampShader->use();
 		M = glm::translate(glm::mat4(1.0f), lightPos);
 		M = glm::scale(M, glm::vec3(0.2f));
 		lampShader->setUnifMat4("P", P);
@@ -241,7 +243,7 @@ int main()
 
 		glBindVertexArray(lightVAO);
 		glDrawArrays(GL_TRIANGLES, 0, cube_numOfTriangles);
-		glBindVertexArray(0);
+		glBindVertexArray(0);*/
 
 		glfwSwapBuffers(window);
 	}
@@ -262,6 +264,51 @@ int main()
 	glfwTerminate();
 
 	return EXIT_SUCCESS;
+}
+
+void changeLightProperties() {
+	if (lightMode == 0) {
+		dir_diffuse = 0.4f;
+		dir_specular = 0.75;
+		point_diffuse = 0.75f;
+		point_specular = 0.55f;
+		spotilight_diffuse = 0.0f;
+		spotilight_specular = 0.0f;
+	}
+	else if (lightMode == 1) {
+		// dir
+		dir_diffuse -= 0.01;
+		dir_diffuse = std::max(dir_diffuse, 0.0f);
+		dir_specular -= 0.01;
+		dir_specular = std::max(dir_specular, 0.0f);
+		// point
+		point_diffuse -= 0.01;
+		point_diffuse = std::max(point_diffuse, 0.0f);
+		point_specular -= 0.01;
+		point_specular = std::max(point_specular, 0.0f);
+		// spotlight
+		spotilight_diffuse += 0.01;
+		spotilight_diffuse = std::min(spotilight_diffuse, 0.5f);
+		spotilight_specular += 0.01;
+		spotilight_specular = std::min(spotilight_specular, 0.35f);
+	}
+	else if (lightMode == 2) {
+		// dir
+		dir_diffuse += 0.01;
+		dir_diffuse = std::min(dir_diffuse, 0.4f);
+		dir_specular += 0.01;
+		dir_specular = std::min(dir_specular, 0.75f);
+		// point
+		point_diffuse += 0.01;
+		point_diffuse = std::min(point_diffuse, 0.75f);
+		point_specular += 0.01;
+		point_specular = std::min(point_specular, 0.55f);
+		// spotlight
+		spotilight_diffuse -= 0.01;
+		spotilight_diffuse = std::max(spotilight_diffuse, 0.0f);
+		spotilight_specular -= 0.01;
+		spotilight_specular = std::max(spotilight_specular, 0.0f);
+	}
 }
 
 void genFood(Snake snake) {
@@ -417,6 +464,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			else if (key == GLFW_KEY_UP) keys[1] = true;
 			else if (key == GLFW_KEY_RIGHT) keys[2] = true;
 			else if (key == GLFW_KEY_DOWN) keys[3] = true;
+			else if (key == GLFW_KEY_0) lightMode = 0;
+			else if (key == GLFW_KEY_1) lightMode = 1;
+			else if (key == GLFW_KEY_2) lightMode = 2;
 		}
 	}
 }
