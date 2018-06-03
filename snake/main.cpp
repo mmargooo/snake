@@ -73,7 +73,7 @@ void clearKeys();
 GLuint readTexture(char* filename);
 void windowResize(GLFWwindow* window, int width, int height);
 void generateFood(int numOfFood, Snake snake, float mapRadius);
-void generateObstacles(int numOfObstacles, Snake snake, float mapRadius);
+void generateObstacles(Snake snake, float mapRadius, int numOfStones, int numOfMushrooms, int numOfFlowers);
 void genFood(Snake snake, float mapRadius);
 void changeLightProperties();
 
@@ -99,7 +99,7 @@ int main()
 
 	Snake snake;
 
-	generateObstacles(4, snake, mapRadius);
+	generateObstacles(snake, mapRadius, 3, 3, 2);
 	generateFood(3, snake, mapRadius);
 
 	initOpenGL(window);
@@ -238,28 +238,32 @@ int main()
 		glBindVertexArray(0);
 
 		// draw obstacles
-		/*glActiveTexture(GL_TEXTURE0);
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tex_stone);
 		glBindVertexArray(vao_stone);
 		for (int i = 0; i < obstacle.size(); i++) {
-			M = glm::translate(glm::mat4(1.0f), obstacle[i].position);
-			M = glm::rotate(M, obstacle[i].angle, glm::vec3(0.0f, 1.0f, 0.0f));
-			M = glm::translate(M, glm::vec3(0.0f, -0.5f, 0.0f));
-			M = glm::scale(M, glm::vec3(0.85f, 0.85f, 0.85f));
-			shader->setUnifMat4("M", M);
-			glDrawArrays(GL_TRIANGLES, 0, stone_numOfTriangles);
+			if (obstacle[i].type == 0) {
+				M = glm::translate(glm::mat4(1.0f), obstacle[i].position);
+				M = glm::rotate(M, obstacle[i].angle, glm::vec3(0.0f, 1.0f, 0.0f));
+				M = glm::translate(M, glm::vec3(0.0f, -0.5f, 0.0f));
+				M = glm::scale(M, glm::vec3(0.85f, 0.85f, 0.85f));
+				shader->setUnifMat4("M", M);
+				glDrawArrays(GL_TRIANGLES, 0, stone_numOfTriangles);
+			}
 		}
-		glBindVertexArray(0);*/
+		glBindVertexArray(0);
 
 		// draw mushroom
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tex_mushroom);
 		glBindVertexArray(vao_mushroom);
 		for (int i = 0; i < obstacle.size(); i++) {
-			M = glm::translate(glm::mat4(1.0f), (glm::vec3(0.0f, 0.0f, 0.0f) - obstacle[i].position) * glm::vec3(-0.95f,-0.95f,-0.95f));
-			M = glm::translate(M, glm::vec3(0.0f, 0.0f, 0.25f));
-			shader->setUnifMat4("M", M);
-			glDrawArrays(GL_TRIANGLES, 0, mushroom_numOfTriangles);
+			if (obstacle[i].type == 1) {
+				M = glm::translate(glm::mat4(1.0f), (glm::vec3(0.0f, 0.0f, 0.0f) - obstacle[i].position) * glm::vec3(-0.95f, -0.95f, -0.95f));
+				M = glm::translate(M, glm::vec3(0.0f, 0.0f, 0.25f));
+				shader->setUnifMat4("M", M);
+				glDrawArrays(GL_TRIANGLES, 0, mushroom_numOfTriangles);
+			}
 		}
 		glBindVertexArray(0);
 
@@ -382,7 +386,8 @@ void generateFood(int numOfFood, Snake snake, float mapRadius) {
 	}
 }
 
-void generateObstacles(int numOfObstacles, Snake snake, float mapRadius) {
+void generateObstacles(Snake snake, float mapRadius, int numOfStones, int numOfMushroms, int numOfFlowers) {
+	int numOfObstacles = numOfStones + numOfMushroms + numOfFlowers;
 	int mr = (int)mapRadius;
 	for (int i = 0; i < numOfObstacles; i++) {
 		bool checkOthers = false;
@@ -404,7 +409,14 @@ void generateObstacles(int numOfObstacles, Snake snake, float mapRadius) {
 			}
 		} while (checkOthers);
 
-		obstacle.push_back(Obstacle(glm::vec3((float)x, 1.0f, (float)z)));
+		int type;
+		if (i < numOfStones)
+			type = 0;
+		else if (i < numOfStones + numOfMushroms)
+			type = 1;
+		else if (i < numOfStones + numOfMushroms + numOfFlowers)
+			type = 2;
+		obstacle.push_back(Obstacle(type, glm::vec3((float)x, 1.0f, (float)z)));
 	}
 }
 
