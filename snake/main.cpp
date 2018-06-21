@@ -43,12 +43,11 @@ GLuint tex_snake, tex_grass, tex_stone, tex_fruit, tex_box, tex_mushroom, tex_fl
 Shader * shader, *lampShader;
 
 // left, up, right, down, escape
-bool keys[] = { false, false, false, false };
+bool keys[] = {false, false, false, false, false};
 bool keyPressed = false;
 
 // timing
 float timeInt = 0.25f;
-int timeElapsed = 0;
 
 float angle = 0.0f;
 
@@ -75,9 +74,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void clearKeys();
 GLuint readTexture(char* filename);
 void windowResize(GLFWwindow* window, int width, int height);
-void generateFood(int numOfFood, Snake snake, float mapRadius);
 void generateObstacles(Snake snake, float mapRadius, int numOfStones, int numOfMushrooms, int numOfFlowers);
-void genFood(Snake snake, float mapRadius);
+void genFood(Snake snake);
 void changeLightProperties();
 
 int main()
@@ -103,7 +101,9 @@ int main()
 	Snake snake;
 
 	generateObstacles(snake, mapRadius, 3, 3, 2);
-	generateFood(3, snake, mapRadius);
+	for (int i = 0; i < 3; i++) {
+		genFood(snake);
+	}
 
 	initOpenGL(window);
 	glfwSetTime(0);
@@ -120,6 +120,7 @@ int main()
 		float currentFrame = glfwGetTime();
 		float ratio = currentFrame / timeInt;
 
+		// point light movement
 		float x = sin(angle) * 7.0f;
 		float z = cos(angle) * 7.0f;
 		angle += 0.002;
@@ -138,10 +139,6 @@ int main()
 		shader->setUnifVec3("pointLight.diffuse", glm::vec3(point_diffuse, point_diffuse, point_diffuse));
 		shader->setUnifVec3("pointLight.specular", glm::vec3(point_specular, point_specular, point_specular));
 
-		/*glm::vec3 adj = (snake.getPrevElem(snake.getHeadIndex()) - snake.getHead()) * (1.0f - ratio);
-		if (!(fabs(adj.x) > 0.5f || fabs(adj.z) > 0.5f) || snake.getDied()) {
-			adj = glm::vec3(0.0f, 0.0f, 0.0f);
-		}*/
 		shader->setUnifVec3("spotLight.position", snake.getHead() + glm::vec3(0.0f, 10.0f, 0.0f));
 		shader->setUnifVec3("spotLight.direction", -glm::vec3(0.0f, 10.0f, 0.0f));
 		shader->setUnifVec3("spotLight.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
@@ -164,7 +161,7 @@ int main()
 			snake.changeDirection(keys);
 			snake.checkCollision(mapRadius, &food, &obstacle, &numOfFood);
 			if (numOfFood < 3) {
-				genFood(snake, mapRadius);
+				genFood(snake);
 			}
 			snake.move();
 			clearKeys();
@@ -203,25 +200,11 @@ int main()
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tex_snake);
 		glBindVertexArray(vao);
-
 		for (int i = 0; i < snake.elem.size(); i++) {
-			glm::vec3 adj = (snake.getPrevElem(i) - snake.getElem(i)) * (1.0f-ratio);	
+			glm::vec3 adj = snake.getElem(i);
 			M = glm::translate(glm::mat4(1.0f), snake.getElem(i));
-			/*if (!snake.getDied()) {
-				if (!(fabs(adj.x) > 0.5f || fabs(adj.z) > 0.5f)) {
-					M = glm::translate(M, adj);
-				}
-				else {
-					M = glm::translate(M, (snake.getPrevElem(i) - snake.getElem(i)));
-				}
-			}*/
 			shader->setUnifMat4("M", M);
 			glDrawArrays(GL_TRIANGLES, 0, cube_numOfTriangles);
-
-			/*M = glm::translate(glm::mat4(1.0f), snake.getPrevElem(i));
-			M = glm::translate(M, glm::vec3(0.0f, 1.0f, 0.0f));
-			shader->setUnifMat4("M", M);
-			glDrawArrays(GL_TRIANGLES, 0, cube_numOfTriangles);*/
 		}
 		glBindVertexArray(0);
 
@@ -263,7 +246,7 @@ int main()
 		for (int i = 0; i < obstacle.size(); i++) {
 			if (obstacle[i].type == 1) {
 				M = glm::translate(glm::mat4(1.0f), (glm::vec3(0.0f, 0.0f, 0.0f) - obstacle[i].position) * glm::vec3(-0.95f, -0.95f, -0.95f));
-				M = glm::translate(M, glm::vec3(0.0f, 0.0f, 0.25f));
+				M = glm::translate(M, glm::vec3(0.0f, 0.0f, 0.175f));
 				shader->setUnifMat4("M", M);
 				glDrawArrays(GL_TRIANGLES, 0, mushroom_numOfTriangles);
 			}
@@ -277,8 +260,7 @@ int main()
 		for (int i = 0; i < obstacle.size(); i++) {
 			if (obstacle[i].type == 2) {
 				M = glm::translate(glm::mat4(1.0f), (glm::vec3(0.0f, 0.0f, 0.0f) - obstacle[i].position) * glm::vec3(-0.95f, -0.95f, -0.95f));
-				//M = glm::translate(glm::mat4(1.0f), (glm::vec3(0.0f, 0.0f, 0.0f) - obstacle[i].position) * glm::vec3(-0.95f, -0.95f, -0.95f));
-				//M = glm::translate(M, glm::vec3(0.0f, 2.0f, 0.0f));
+				M = glm::rotate(M, obstacle[i].angle, glm::vec3(0.0f, 1.0f, 0.0f));
 				M = glm::scale(M, glm::vec3(1.5f, 1.5f, 1.5f));
 				shader->setUnifMat4("M", M);
 				glDrawArrays(GL_TRIANGLES, 0, flower_numOfTriangles);
@@ -286,18 +268,16 @@ int main()
 		}
 		glBindVertexArray(0);
 
-
-
 		/*lampShader->use();
 		M = glm::translate(glm::mat4(1.0f), lightPos);
 		M = glm::scale(M, glm::vec3(0.2f));
 		lampShader->setUnifMat4("P", P);
 		lampShader->setUnifMat4("V", V);
-		lampShader->setUnifMat4("M", M);
+		lampShader->setUnifMat4("M", M);*/
 
 		glBindVertexArray(lightVAO);
 		glDrawArrays(GL_TRIANGLES, 0, cube_numOfTriangles);
-		glBindVertexArray(0);*/
+		glBindVertexArray(0);
 
 		glfwSwapBuffers(window);
 	}
@@ -374,7 +354,7 @@ void changeLightProperties() {
 	}
 }
 
-void genFood(Snake snake, float mapRadius) {
+void genFood(Snake snake) {
 	int mr = (int)mapRadius;
 	bool checkOthers;
 
@@ -405,12 +385,6 @@ void genFood(Snake snake, float mapRadius) {
 	numOfFood++;
 }
 
-void generateFood(int numOfFood, Snake snake, float mapRadius) {
-	for (int i = 0; i < numOfFood; i++) {
-		genFood(snake, mapRadius);
-	}
-}
-
 void generateObstacles(Snake snake, float mapRadius, int numOfStones, int numOfMushroms, int numOfFlowers) {
 	int numOfObstacles = numOfStones + numOfMushroms + numOfFlowers;
 	int mr = (int)mapRadius;
@@ -421,8 +395,14 @@ void generateObstacles(Snake snake, float mapRadius, int numOfStones, int numOfM
 		do {
 			checkOthers = false;
 
-			x = -mr + (rand() % static_cast<int>(mr - (-mr) + 1));
-			z = -mr + (rand() % static_cast<int>(mr - (-mr) + 1));
+			do {
+				x = -mr + (rand() % static_cast<int>(mr - (-mr) + 1));
+			} while (abs(x) < 2);
+			
+			do {
+				z = -mr + (rand() % static_cast<int>(mr - (-mr) + 1));
+			} while (abs(z) < 2);
+			
 			glm::vec3 pos = glm::vec3((float)x, 1.0f, (float)z);
 			for (int j = 0; j < snake.elem.size(); j++) {
 				if (snake.elem[j] == pos)
@@ -563,6 +543,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			else if (key == GLFW_KEY_UP) keys[1] = true;
 			else if (key == GLFW_KEY_RIGHT) keys[2] = true;
 			else if (key == GLFW_KEY_DOWN) keys[3] = true;
+			else if (key == GLFW_KEY_R) keys[4] = true;
 			else if (key == GLFW_KEY_0) lightMode = 0;
 			else if (key == GLFW_KEY_1) lightMode = 1;
 			else if (key == GLFW_KEY_2) lightMode = 2;
@@ -572,7 +553,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 void clearKeys() {
 	keyPressed = false;
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 5; i++) {
 		keys[i] = false;
 	}
 }

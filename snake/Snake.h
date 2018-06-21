@@ -17,24 +17,15 @@ private:
 	glm::vec3 tailPos;
 public:
 	std::vector<glm::vec3> elem;
-	std::vector<glm::vec3> prevElem;
 	Snake() {
 		elem.push_back(glm::vec3(0.0f, 1.0f, -1.0f));
 		elem.push_back(glm::vec3(1.0f, 1.0f, -1.0f));
 		elem.push_back(glm::vec3(2.0f, 1.0f, -1.0f));
 		elem.push_back(glm::vec3(3.0f, 1.0f, -1.0f));
-
-		for (int i = 0; i < elem.size(); i++) {
-			prevElem.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
-		}
 	}
 	void move() {
 		if (!ateFood && !died) {
 			int prevHead = head;
-			
-			for (int i = 0; i < elem.size(); i++) {
-				prevElem[i] = elem[i == elem.size()-1 ? 0 : i+1];
-			}
 
 			head--;
 
@@ -73,6 +64,16 @@ public:
 		else if (keys[3]) {
 			if (direction == 'l' || direction == 'r') direction = 'd';
 		}
+		else if (keys[4] && died) {
+			died = false;
+			elem.clear();
+			head = 0;
+			direction = 'u';
+			elem.push_back(glm::vec3(0.0f, 1.0f, -1.0f));
+			elem.push_back(glm::vec3(1.0f, 1.0f, -1.0f));
+			elem.push_back(glm::vec3(2.0f, 1.0f, -1.0f));
+			elem.push_back(glm::vec3(3.0f, 1.0f, -1.0f));
+		}
 	}
 	void checkCollision(float mapRadius, std::vector<Food> * food, std::vector<Obstacle> * obstacle, int * numOfFood) {
 		glm::vec3 nextHead;
@@ -93,7 +94,6 @@ public:
 				(*food).erase((*food).begin() + i);
 				ateFood = true;
 				elem.insert(elem.begin() + head, (elem[head] + nextHead));
-				prevElem.push_back((elem[head] - nextHead));
 				(*numOfFood)--;
 			}
 		}
@@ -112,9 +112,6 @@ public:
 	}
 	glm::vec3 getElem(int i) {
 		return elem[i];
-	}
-	glm::vec3 getPrevElem(int i) {
-		return prevElem[i];
 	}
 	glm::vec3 getHead() {
 		return elem[head];

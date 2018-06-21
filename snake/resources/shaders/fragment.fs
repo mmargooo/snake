@@ -28,9 +28,6 @@ uniform PointLight pointLight;
 uniform DirectionalLight directionalLight;
 uniform SpotLight spotLight;
 
-//#define NR_POINT_LIGHTS 4 
-//uniform PointLight pointLights[NR_POINT_LIGHTS];
-
 out vec4 color;
 
 in vec4 n;
@@ -57,12 +54,13 @@ void main() {
 	vec4 mspot_l = normalize(spot_l);
 	vec4 mspot_d = normalize(spot_d);
 
+	// calc directional
 	color = vec4(calcDirectionalLight(directionalLight, md, mn, mv),1);
 	
-	//foreach pointlight
-		color += vec4(calcPointLight(pointLight, ml, mn, mv), 0);
+	// calc pointlight 
+	color += vec4(calcPointLight(pointLight, ml, mn, mv), 1);
 
-	//calcspotlight
+	// calc spotlight
 	color += vec4(calcSpotLight(spotLight, mspot_l, mspot_d, mn, mv), 1);
 }
 
